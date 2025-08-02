@@ -1,0 +1,8 @@
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/controller/NoteController.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/service/NoteService.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/repository/NoteRepository.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/repository/BoardRepository.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/ReactNoteAppBackendApplication.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/entity/StringListConverter.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/entity/Board.java
+/Users/user/ReactProject/my-app/backend/src/main/java/com/example/reactnoteappbackend/entity/Note.java

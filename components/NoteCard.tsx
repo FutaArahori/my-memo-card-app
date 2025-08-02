@@ -12,7 +12,7 @@ type NoteCardProps = {
   onUpdate: (updatedNote: Note) => void; 
   onDelete: (id: number) => void;
   onFocus: (id: number) => void;
-  savingStatus: 'idle' | 'saving' | 'saved';
+  savingStatus: 'idle' | 'saving' | 'saved' | 'error';
 };
 
 // NoteCardコンポーネントの定義
@@ -186,6 +186,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onUpdate, onDelete, onFocus, 
         <div className="text-right text-xs text-gray-500 mt-2">
           {savingStatus === 'saving' && '保存中...'}
           {savingStatus === 'saved' && '保存済み'}
+          {savingStatus === 'error' && 'エラー'}
         </div>
       </Resizable>
     </div>

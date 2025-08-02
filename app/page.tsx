@@ -3,50 +3,59 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import NoteCard from '../components/NoteCard';
 import { Note, AppData } from '../lib/types';
-import { loadAppData, saveAppData } from '../lib/localStorage';
+import { getNotes, createNote, updateNote as apiUpdateNote, deleteNote as apiDeleteNote } from '../lib/api';
 
 export default function Home() {
   const [appData, setAppData] = useState<AppData>({
     boards: { default: [] },
     activeBoard: 'default',
   });
-  const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [maxZIndex, setMaxZIndex] = useState(0);
 
-  useEffect(() => {
-    const loadedData = loadAppData();
-    setAppData(loadedData);
-    const currentBoardNotes = loadedData.boards[loadedData.activeBoard] || [];
-    const currentMaxZIndex = currentBoardNotes.reduce((max, note) => Math.max(max, note.zIndex), 0);
-    setMaxZIndex(currentMaxZIndex);
-  }, []);
-
-  useEffect(() => {
-    if (appData.boards[appData.activeBoard]?.length > 0 || Object.keys(appData.boards).length > 1) {
+  const fetchNotes = useCallback(async (boardName: string) => {
+    try {
       setSavingStatus('saving');
-      const handler = setTimeout(() => {
-        saveAppData(appData);
-        setSavingStatus('saved');
-      }, 500);
-      return () => clearTimeout(handler);
+      const notes = await getNotes(boardName);
+      setAppData((prev) => ({
+        ...prev,
+        boards: { ...prev.boards, [boardName]: notes },
+      }));
+      const currentMaxZIndex = notes.reduce((max, note) => Math.max(max, note.zIndex), 0);
+      setMaxZIndex(currentMaxZIndex);
+      setSavingStatus('saved');
+    } catch (error) {
+      console.error("Failed to fetch notes:", error);
+      setSavingStatus('error');
     }
-  }, [appData]);
-
-  const updateNote = useCallback((updatedNote: Note) => {
-    setAppData((prevData) => {
-      const newBoards = { ...prevData.boards };
-      const currentNotes = newBoards[prevData.activeBoard] || [];
-      newBoards[prevData.activeBoard] = currentNotes.map((note) =>
-        note.id === updatedNote.id ? updatedNote : note
-      );
-      return { ...prevData, boards: newBoards };
-    });
   }, []);
 
-  const addNote = () => {
+  useEffect(() => {
+    fetchNotes(appData.activeBoard);
+  }, [appData.activeBoard, fetchNotes]);
+
+  const updateNote = useCallback(async (updatedNote: Note) => {
+    try {
+      setSavingStatus('saving');
+      const savedNote = await apiUpdateNote(updatedNote.id, updatedNote);
+      setAppData((prevData) => {
+        const newBoards = { ...prevData.boards };
+        const currentNotes = newBoards[prevData.activeBoard] || [];
+        newBoards[prevData.activeBoard] = currentNotes.map((note) =>
+          note.id === savedNote.id ? savedNote : note
+        );
+        return { ...prevData, boards: newBoards };
+      });
+      setSavingStatus('saved');
+    } catch (error) {
+      console.error("Failed to update note:", error);
+      setSavingStatus('error');
+    }
+  }, [appData.activeBoard]);
+
+  const addNote = async () => {
     const newZIndex = maxZIndex + 1;
-    const newNote: Note = {
-      id: Date.now(),
+    const newNoteData = {
       content: '新しいメモ',
       x: 50,
       y: 50,
@@ -55,26 +64,41 @@ export default function Home() {
       color: '#FFFACD',
       zIndex: newZIndex,
       tags: [],
-      lastSaved: new Date().toISOString(),
     };
 
-    setAppData((prevData) => {
-      const newBoards = { ...prevData.boards };
-      const currentNotes = newBoards[prevData.activeBoard] || [];
-      newBoards[prevData.activeBoard] = [...currentNotes, newNote];
-      return { ...prevData, boards: newBoards };
-    });
-    setMaxZIndex(newZIndex);
+    try {
+      setSavingStatus('saving');
+      const savedNote = await createNote(appData.activeBoard, newNoteData);
+      setAppData((prevData) => {
+        const newBoards = { ...prevData.boards };
+        const currentNotes = newBoards[prevData.activeBoard] || [];
+        newBoards[prevData.activeBoard] = [...currentNotes, savedNote];
+        return { ...prevData, boards: newBoards };
+      });
+      setMaxZIndex(newZIndex);
+      setSavingStatus('saved');
+    } catch (error) {
+      console.error("Failed to create note:", error);
+      setSavingStatus('error');
+    }
   };
 
-  const deleteNote = useCallback((id: number) => {
-    setAppData((prevData) => {
-      const newBoards = { ...prevData.boards };
-      const currentNotes = newBoards[prevData.activeBoard] || [];
-      newBoards[prevData.activeBoard] = currentNotes.filter((note) => note.id !== id);
-      return { ...prevData, boards: newBoards };
-    });
-  }, []);
+  const deleteNote = useCallback(async (id: number) => {
+    try {
+      setSavingStatus('saving');
+      await apiDeleteNote(id);
+      setAppData((prevData) => {
+        const newBoards = { ...prevData.boards };
+        const currentNotes = newBoards[prevData.activeBoard] || [];
+        newBoards[prevData.activeBoard] = currentNotes.filter((note) => note.id !== id);
+        return { ...prevData, boards: newBoards };
+      });
+      setSavingStatus('saved');
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+      setSavingStatus('error');
+    }
+  }, [appData.activeBoard]);
 
   const focusNote = useCallback((id: number) => {
     setAppData((prevData) => {
@@ -85,18 +109,21 @@ export default function Home() {
       if (focusedNoteIndex === -1) return prevData;
 
       const newMaxZIndex = maxZIndex + 1;
-      const updatedNotes = currentNotes.map((note, index) =>
-        note.id === id ? { ...note, zIndex: newMaxZIndex } : note
-      );
+      const noteToUpdate = currentNotes.find((note) => note.id === id);
 
-      // Sort notes to ensure the focused one is last (highest z-index)
-      updatedNotes.sort((a, b) => a.zIndex - b.zIndex);
+      if (!noteToUpdate) return prevData;
+
+      const updatedNote = { ...noteToUpdate, zIndex: newMaxZIndex };
+
+      apiUpdateNote(id, { zIndex: newMaxZIndex }).catch(err => console.error("Failed to save z-index change", err));
+
+      const updatedNotes = currentNotes.map(note => note.id === id ? updatedNote : note);
 
       newBoards[prevData.activeBoard] = updatedNotes;
       setMaxZIndex(newMaxZIndex);
       return { ...prevData, boards: newBoards };
     });
-  }, [maxZIndex]);
+  }, [maxZIndex, appData.activeBoard]);
 
   const handleBoardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newBoard = e.target.value;
@@ -172,7 +199,8 @@ export default function Home() {
         <div className="text-sm text-gray-600">
           {savingStatus === 'saving' && '保存中...'}
           {savingStatus === 'saved' && '保存済み'}
-          {savingStatus === 'idle' && 'アイドル'}
+          {savingStatus === 'error' && 'エラー'}
+          {savingStatus === 'idle' && ''}
         </div>
       </header>
 
