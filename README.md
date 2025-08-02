@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# React Note App
 
-## Getting Started
+これは、React (Next.js) と Spring Boot で構築された、付箋のようなUIでメモを管理するノートアプリケーションです。
 
-First, run the development server:
+![アプリケーションのスクリーンショット](httpsd://user-images.githubusercontent.com/1234567/123456789-abcdef.png)  <!-- あとで実際のスクリーンショットに差し替える -->
+
+## ✨ 主な機能
+
+*   **ボード管理**: 複数のノートを「ボード」という単位でグループ化できます。
+*   **ノート操作**:
+    *   ノートの追加、編集、削除
+    *   ドラッグ＆ドロップによる自由な配置
+    *   リサイズによる大きさの変更
+    *   背景色の変更
+*   **データ永続化**: 作成したノートやボードの情報はデータベースに保存され、いつでも復元できます。
+
+## 🛠️ 技術スタック
+
+このアプリケーションは、以下の技術を使用して構築されています。
+
+*   **フロントエンド**:
+    *   [Next.js](https://nextjs.org/)
+    *   [React](https://react.dev/)
+    *   [TypeScript](https://www.typescriptlang.org/)
+    *   [Tailwind CSS](https://tailwindcss.com/)
+    *   [Interact.js](https://interactjs.io/) (ドラッグ＆ドロップ)
+    *   [Re-resizable](https://github.com/bokuweb/re-resizable) (リサイズ)
+*   **バックエンド**:
+    *   [Java 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+    *   [Spring Boot](https://spring.io/projects/spring-boot)
+    *   [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
+*   **データベース**:
+    *   [MySQL 8.0](https://www.mysql.com/)
+*   **環境構築**:
+    *   [Docker](https://www.docker.com/)
+    *   [Maven](https://maven.apache.org/)
+
+## 🚀 開発環境のセットアップ
+
+以下の手順で、ローカル環境でアプリケーションを起動できます。
+
+### 1. 前提条件
+
+*   [Docker](https://www.docker.com/get-started) がインストールされていること。
+*   [Node.js](https://nodejs.org/) (v18以上推奨) がインストールされていること。
+*   [Java (JDK 17)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) がインストールされていること。
+*   [Maven](https://maven.apache.org/download.cgi) がインストールされていること。
+
+### 2. データベースの起動
+
+まず、Dockerを使ってMySQLデータベースを起動します。プロジェクトのルートディレクトリで以下のコマンドを実行してください。
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker-compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+これにより、`docker-compose.yml` の設定に基づいてMySQLコンテナがバックグラウンドで起動し、`db/init.sql` によってテーブルが自動的に作成されます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. バックエンドサーバーの起動
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+次に、バックエンドのSpring Bootアプリケーションを起動します。
+新しいターミナルを開き、`backend` ディレクトリに移動してMavenコマンドを実行します。
 
-## Learn More
+```bash
+cd backend
+mvn spring-boot:run
+```
 
-To learn more about Next.js, take a look at the following resources:
+サーバーは `http://localhost:8080` で起動します。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. フロントエンドサーバーの起動
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+最後に、フロントエンドのNext.jsアプリケーションを起動します。
+別の新しいターミナルを開き、プロジェクトのルートディレクトリで以下のコマンドを実行します。
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. アプリケーションへのアクセス
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+すべてのサーバーが起動したら、ブラウザで以下のURLにアクセスしてください。
+
+[http://localhost:3000](http://localhost:3000)
+
+ノートアプリが表示され、操作できるはずです。
+
+## 📄 APIエンドポイント
+
+バックエンドは以下のAPIを提供します。ベースURLは `http://localhost:8080/api` です。
+
+| メソッド | URL                               | 説明                             |
+| :------- | :-------------------------------- | :------------------------------- |
+| `GET`    | `/boards/{boardName}/notes`       | 指定したボードの全ノートを取得   |
+| `POST`   | `/boards/{boardName}/notes`       | 指定したボードに新しいノートを作成 |
+| `PUT`    | `/notes/{id}`                     | 指定したIDのノートを更新         |
+| `DELETE` | `/notes/{id}`                     | 指定したIDのノートを削除         |
