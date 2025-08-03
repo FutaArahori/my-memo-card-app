@@ -6,9 +6,9 @@ services:
     platform: linux/amd64
     environment:
       MYSQL_DATABASE: 'react_note_app'
-      MYSQL_USER: 'user'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'rootpassword'
+      MYSQL_USER: ''
+      MYSQL_PASSWORD: ''
+      MYSQL_ROOT_PASSWORD: ''
     ports:
       - "3306:3306"
     volumes:
