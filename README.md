@@ -2,11 +2,8 @@
 
 React (Next.js) と Spring Boot で構築された、付箋のようなUIでメモを管理するアプリケーション
 
-<p align="center">
-  <video src="react-memo-app.mp4" width="80%" controls autoplay loop muted>
-    お使いのブラウザは動画タグをサポートしていません。
-  </video>
-</p>
+https://github.com/user-attachments/assets/872ebafb-89e0-4aaf-b77e-0bf6598ac616
+
 
 ## ✨ 主な機能
 
